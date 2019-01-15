@@ -7,7 +7,9 @@ from keras.models import Sequential
 from keras.layers import Flatten, Dense, Cropping2D, Lambda
 from keras.layers.convolutional import Convolution2D
 from keras.layers.pooling import MaxPooling2D
+from keras.callbacks import EarlyStopping
 from sklearn.model_selection import train_test_split
+from sklearn.utils import shuffle
 
 #don't use load_data as it loads all images in memory at once, use generators instead
 def load_data():
@@ -22,17 +24,19 @@ def process_log_lines(lines):
     measurements = []
     for line in lines:
         skip = False
+        row_imgs = []
         for i in range(3): #center, left, right
             path = line[i]
             filename = path.split('/')[-1]
             current_path = '{}/IMG/{}'.format(data_folder, filename)
             if os.path.isfile(current_path):
                 image = cv2.cvtColor(cv2.imread(current_path), cv2.COLOR_BGR2RGB) #convert for drive.py
-                images.append(image)
+                row_imgs.append(image)
             else:
                 skip = True
                 i = 2
         if not skip:
+            images.extend(row_imgs)
             correction = 0.2
             measurement = float(line[3])
             measurements.append(measurement)
@@ -46,7 +50,7 @@ def process_log_lines(lines):
 def generator(samples, batch_size=32):
     num_samples = len(samples)
     while 1: # Loop forever so the generator never terminates
-        #shuffle(samples)
+        shuffle(samples)
         for offset in range(0, num_samples, batch_size):
             batch_samples = samples[offset:offset+batch_size]
             X_train, y_train = process_log_lines(batch_samples)
@@ -86,16 +90,16 @@ def main():
     train_samples, validation_samples = train_test_split(samples, test_size=test_size)
     train_generator = generator(train_samples, batch_size=batch_size)
     validation_generator = generator(validation_samples, batch_size=batch_size)
+    cbs = [EarlyStopping(monitor='val_loss', min_delta=0, patience=3,
+                                         verbose=1, mode='auto', baseline=None, restore_best_weights=True)]
 
     ch, row, col = 3, 160, 320 
     model = lenet5_model((row, col, ch))
     model.fit_generator(train_generator, samples_per_epoch= len(train_samples), 
                         validation_data=validation_generator, 
-                        nb_val_samples=len(validation_samples), nb_epoch=epochs)
+                        nb_val_samples=len(validation_samples), nb_epoch=epochs,
+                       callbacks = cbs)
 
-    # X_train, y_train = load_data()
-    # model = lenet5_model((row, col, ch))
-    # model.fit(X_train, y_train, validation_split=validation_split, shuffle=True, epochs=epoch)
     model.save('model.h5')
 
 data_folder = './data'
