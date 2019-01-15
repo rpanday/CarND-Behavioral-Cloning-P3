@@ -4,7 +4,7 @@ import os.path
 import numpy as np
 import sklearn
 from keras.models import Sequential
-from keras.layers import Flatten, Dense, Cropping2D, Lambda
+from keras.layers import Flatten, Dense, Cropping2D, Lambda, Dropout
 from keras.layers.convolutional import Convolution2D
 from keras.layers.pooling import MaxPooling2D
 from keras.callbacks import EarlyStopping
@@ -63,6 +63,43 @@ def get_input_paths():
         for line in reader:
             samples.append(line)
     return samples
+
+def nvidia_model(input_shape):
+    model = Sequential()
+
+    model.add(Lambda(lambda x: x / 255 - 0.5, input_shape=input_shape))
+
+    model.add(Cropping2D(((70, 25), (0, 0))))
+
+    model.add(Convolution2D(24, 5, 5, activation='relu', subsample=(2, 2)))
+    model.add(Dropout(0.2))
+
+    model.add(Convolution2D(36, 5, 5, activation='relu', subsample=(2, 2)))
+    model.add(Dropout(0.2))
+
+    model.add(Convolution2D(48, 5, 5, activation='relu', subsample=(2, 2)))
+    model.add(Dropout(0.1))
+
+    model.add(Convolution2D(64, 3, 3, activation='relu'))
+    model.add(Dropout(0.1))
+
+    model.add(Convolution2D(64, 3, 3, activation='relu'))
+    model.add(Dropout(0.1))
+
+    model.add(Flatten())
+
+    model.add(Dense(100, activation='relu'))
+    model.add(Dropout(0.5))
+
+    model.add(Dense(50, activation='relu'))
+    model.add(Dropout(0.3))
+
+    model.add(Dense(10, activation='relu'))
+    model.add(Dense(1))
+
+    model.compile(optimizer='adam', loss='mse')
+
+    return model
 
 
 def lenet5_model(input_shape):
