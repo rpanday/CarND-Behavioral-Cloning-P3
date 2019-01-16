@@ -144,3 +144,8 @@ This data was further subjected to normalization to reduce the scale of error an
 I finally randomly shuffled the data set and put 20% of the data into a validation set. 
 
 I used this training data for training the model for 3 epochs on a batch size of 32. The validation set helped determine if the model was over or under fitting. The ideal number of epochs was 3 because subsequent epochs did not give me decrease in validtion loss and training time was around 15-20 minutes per epoch in GPU workspace. I used an adam optimizer so that manually training the learning rate wasn't necessary.
+
+### Simulation
+#### Is the car able to navigate correctly on test data?
+
+The car drives around track 1 in autonomus mode correctly. No tire leaves the drivable portion of the track surface. The car does not pop up onto ledges or roll over any surfaces that would otherwise be considered unsafe (if humans were in the vehicle). The sample video is recorded using drive.py and simulator and can be seen in `video.mp4` file.
